@@ -314,8 +314,8 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3 text-[11px] text-gray-500 mb-3">
-                <span class="flex items-center"><span class="w-3 h-3 bg-emerald-100 rounded mr-1"></span> Low Spend Volume</span>
-                <span class="flex items-center"><span class="w-3 h-3 bg-emerald-600 rounded mr-1"></span> High Spend Volume</span>
+                <span class="flex items-center"><span class="w-3 h-3 bg-purple-200 rounded mr-1"></span> Low Spend Volume</span>
+                <span class="flex items-center"><span class="w-3 h-3 bg-purple-600 rounded mr-1"></span> High Spend Volume</span>
             </div>
             <div id="heatmap-container" class="overflow-x-auto mt-2">
                 <!-- Dynamically rendered heatmap grid -->
@@ -770,8 +770,6 @@
         }
 
         // Context-Aware Pop-Up Modals Implementation
-        // Context-Aware Pop-Up Modals Implementation
-        // Context-Aware Pop-Up Modals Implementation
         function openModal(key) {
             const modal = document.getElementById('drilldown-modal');
             const titleEl = document.getElementById('modal-title');
@@ -788,131 +786,66 @@
             let chartConfig = {};
             let isKpiModal = false;
 
-        if (key === 'kpi_spend') {
-            isKpiModal = true;
-            titleEl.innerText = "YTD Spend Detailed Master Registry";
-            tableTitleEl.innerText = "All Active Items (Ranked Descending by YTD Spend)";
-            filteredSubset.sort((a,b) => Number(b['Ytd Sep26 12mths PO Spends (USD)']||0) - Number(a['Ytd Sep26 12mths PO Spends (USD)']||0));
+            if (key === 'kpi_spend') {
+                isKpiModal = true;
+                titleEl.innerText = "YTD Spend Detailed Master Registry";
+                tableTitleEl.innerText = "All Active Items (Ranked Descending by YTD Spend)";
+                filteredSubset.sort((a,b) => Number(b['Ytd Sep26 12mths PO Spends (USD)']||0) - Number(a['Ytd Sep26 12mths PO Spends (USD)']||0));
 
-            const headers = ["Material Name", "Plant Region", "Sub Category", "Category Manager", "YTD Spend (USD)"];
-            const rows = filteredSubset.map(d => [
-                d['Material Name'] || 'N/A',
-                d['Plant Region'] || 'N/A',
-                d['Sub Category'] || 'N/A',
-                d['Catergory Manager'] || 'N/A',
-                '$' + Number(d['Ytd Sep26 12mths PO Spends (USD)']||0).toLocaleString(undefined, {minimumFractionDigits: 2})
-            ]);
-            renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
-
-        } else if (key === 'kpi_qty') {
-            isKpiModal = true;
-            titleEl.innerText = "PO Volume Detailed Master Registry";
-            tableTitleEl.innerText = "All Active Items (Ranked Descending by PO Quantity)";
-            filteredSubset.sort((a,b) => Number(b['Ytd Sep26 12mths PO Qty (Kgs)']||0) - Number(a['Ytd Sep26 12mths PO Qty (Kgs)']||0));
-
-            const headers = ["Material Name", "Plant Region", "Sub Category", "Category Manager", "PO Quantity (Kgs)"];
-            const rows = filteredSubset.map(d => [
-                d['Material Name'] || 'N/A',
-                d['Plant Region'] || 'N/A',
-                d['Sub Category'] || 'N/A',
-                d['Catergory Manager'] || 'N/A',
-                Number(d['Ytd Sep26 12mths PO Qty (Kgs)']||0).toLocaleString() + ' Kgs'
-            ]);
-            renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
-
-        } else if (key === 'kpi_savings') {
-            isKpiModal = true;
-            titleEl.innerText = "Projected Savings Pipeline Master Registry";
-            tableTitleEl.innerText = "All Active Initiatives (Ranked Descending by Savings)";
-            filteredSubset.sort((a,b) => calcRowSavings(b) - calcRowSavings(a));
-
-            const headers = ["Material Name", "Sub Category", "Initiative Type", "Stage Gate", "Projected Savings (USD)"];
-            const rows = filteredSubset.map(d => [
-                d['Material Name'] || 'N/A',
-                d['Sub Category'] || 'N/A',
-                d['Initiative Type'] || 'N/A',
-                d['Stage Gate'] || 'N/A',
-                '$' + calcRowSavings(d).toLocaleString(undefined, {minimumFractionDigits: 2})
-            ]);
-            renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
-
-        } else if (key === 'kpi_items') {
-            isKpiModal = true;
-            titleEl.innerText = "Active Procurement Line Items Registry";
-            tableTitleEl.innerText = "Complete Master Record View";
-            renderTable(filteredSubset, 'modal-data-table', 'modal-table-head', 'modal-table-body');
-
-        } else if (key === 'sec-map') {
-            isKpiModal = true;
-            titleEl.innerText = "Global Regional Spend & Savings Breakdown";
-            tableTitleEl.innerText = "Regional Distribution Master Registry (All Plant Regions)";
-
-            const regAgg = {};
-            filteredSubset.forEach(d => {
-                const reg = d['Plant Region'] || 'Rest of World';
-                if (!regAgg[reg]) regAgg[reg] = { spend: 0, savings: 0, items: 0 };
-                regAgg[reg].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
-                regAgg[reg].savings += calcRowSavings(d);
-                regAgg[reg].items += 1;
-            });
-
-            const headers = ["Plant Region", "Active Records", "Total Spend (USD)", "Total Savings (USD)", "ROI Ratio"];
-            const sortedRegions = Object.keys(regAgg).sort((a,b) => regAgg[b].spend - regAgg[a].spend);
-
-            const rows = sortedRegions.map(reg => {
-                const spend = regAgg[reg].spend;
-                const sav = regAgg[reg].savings;
-                const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
-                return [
-                    reg,
-                    regAgg[reg].items + ' items',
-                    '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}),
-                    '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}),
-                    ratio
-                ];
-            });
-            renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
-
-        } else {
-            // Chart modals keep their visual chart view as expected
-            chartWrapper.style.display = 'flex';
-
-            if (key === 'chartSubCat') {
-                titleEl.innerText = "Sub Category Spend & Savings Analysis";
-                tableTitleEl.innerText = "Sub Category Summary Breakdown";
-                const subCatAgg = {};
-                filteredSubset.forEach(d => {
-                    const sub = d['Sub Category'] || 'Unassigned';
-                    if (!subCatAgg[sub]) subCatAgg[sub] = { spend: 0, savings: 0 };
-                    subCatAgg[sub].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
-                    subCatAgg[sub].savings += calcRowSavings(d);
-                });
-                chartConfig = {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(subCatAgg),
-                        datasets: [
-                            { label: 'Spend ($)', data: Object.values(subCatAgg).map(v => v.spend), backgroundColor: '#4f46e5', borderRadius: 4 },
-                            { label: 'Savings ($)', data: Object.values(subCatAgg).map(v => v.savings), backgroundColor: '#10b981', borderRadius: 4 }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
-                };
-                const headers = ["Sub Category", "Total Spend (USD)", "Total Savings (USD)", "ROI Efficiency"];
-                const rows = Object.keys(subCatAgg).map(sub => {
-                    const spend = subCatAgg[sub].spend;
-                    const sav = subCatAgg[sub].savings;
-                    const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
-                    return [sub, '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}), ratio];
-                });
+                const headers = ["Material Name", "Plant Region", "Sub Category", "Category Manager", "YTD Spend (USD)"];
+                const rows = filteredSubset.map(d => [
+                    d['Material Name'] || 'N/A',
+                    d['Plant Region'] || 'N/A',
+                    d['Sub Category'] || 'N/A',
+                    d['Catergory Manager'] || 'N/A',
+                    '$' + Number(d['Ytd Sep26 12mths PO Spends (USD)']||0).toLocaleString(undefined, {minimumFractionDigits: 2})
+                ]);
                 renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
 
-            } else if (key === 'chartRegion') {
-                titleEl.innerText = "Regional Spend Distribution Overview";
-                tableTitleEl.innerText = "Overview: Regional Summary Table (All 7 Plant Regions)";
-                const allRegions = ["North America", "EMEA", "South East Asia", "Latin America", "Greater China", "India", "Rest of World"];
+            } else if (key === 'kpi_qty') {
+                isKpiModal = true;
+                titleEl.innerText = "PO Volume Detailed Master Registry";
+                tableTitleEl.innerText = "All Active Items (Ranked Descending by PO Quantity)";
+                filteredSubset.sort((a,b) => Number(b['Ytd Sep26 12mths PO Qty (Kgs)']||0) - Number(a['Ytd Sep26 12mths PO Qty (Kgs)']||0));
+
+                const headers = ["Material Name", "Plant Region", "Sub Category", "Category Manager", "PO Quantity (Kgs)"];
+                const rows = filteredSubset.map(d => [
+                    d['Material Name'] || 'N/A',
+                    d['Plant Region'] || 'N/A',
+                    d['Sub Category'] || 'N/A',
+                    d['Catergory Manager'] || 'N/A',
+                    Number(d['Ytd Sep26 12mths PO Qty (Kgs)']||0).toLocaleString() + ' Kgs'
+                ]);
+                renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+            } else if (key === 'kpi_savings') {
+                isKpiModal = true;
+                titleEl.innerText = "Projected Savings Pipeline Master Registry";
+                tableTitleEl.innerText = "All Active Initiatives (Ranked Descending by Savings)";
+                filteredSubset.sort((a,b) => calcRowSavings(b) - calcRowSavings(a));
+
+                const headers = ["Material Name", "Sub Category", "Initiative Type", "Stage Gate", "Projected Savings (USD)"];
+                const rows = filteredSubset.map(d => [
+                    d['Material Name'] || 'N/A',
+                    d['Sub Category'] || 'N/A',
+                    d['Initiative Type'] || 'N/A',
+                    d['Stage Gate'] || 'N/A',
+                    '$' + calcRowSavings(d).toLocaleString(undefined, {minimumFractionDigits: 2})
+                ]);
+                renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+            } else if (key === 'kpi_items') {
+                isKpiModal = true;
+                titleEl.innerText = "Active Procurement Line Items Registry";
+                tableTitleEl.innerText = "Complete Master Record View";
+                renderTable(filteredSubset, 'modal-data-table', 'modal-table-head', 'modal-table-body');
+
+            } else if (key === 'sec-map') {
+                isKpiModal = true;
+                titleEl.innerText = "Global Regional Spend & Savings Breakdown";
+                tableTitleEl.innerText = "Regional Distribution Master Registry (All Plant Regions)";
+
                 const regAgg = {};
-                allRegions.forEach(r => regAgg[r] = { spend: 0, savings: 0, items: 0 });
                 filteredSubset.forEach(d => {
                     const reg = d['Plant Region'] || 'Rest of World';
                     if (!regAgg[reg]) regAgg[reg] = { spend: 0, savings: 0, items: 0 };
@@ -920,161 +853,194 @@
                     regAgg[reg].savings += calcRowSavings(d);
                     regAgg[reg].items += 1;
                 });
-                chartConfig = {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(regAgg),
-                        datasets: [{ data: Object.values(regAgg).map(v => v.spend), backgroundColor: ['#4f46e5', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-                };
-                const headers = ["Plant Region", "Total Spend (USD)", "Total Savings (USD)", "Active Records"];
-                const rows = Object.keys(regAgg).map(reg => [
-                    reg,
-                    '$' + regAgg[reg].spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + regAgg[reg].savings.toLocaleString(undefined, {minimumFractionDigits: 2}),
-                    regAgg[reg].items + ' items'
-                ]);
+
+                const headers = ["Plant Region", "Active Records", "Total Spend (USD)", "Total Savings (USD)", "ROI Ratio"];
+                const sortedRegions = Object.keys(regAgg).sort((a,b) => regAgg[b].spend - regAgg[a].spend);
+
+                const rows = sortedRegions.map(reg => {
+                    const spend = regAgg[reg].spend;
+                    const sav = regAgg[reg].savings;
+                    const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
+                    return [
+                        reg,
+                        regAgg[reg].items + ' items',
+                        '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}),
+                        '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}),
+                        ratio
+                    ];
+                });
                 renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
 
-            // } else if (key === 'chartTopMaterials') {
-            //     titleEl.innerText = "Material Spend & Savings Analysis";
-            //     tableTitleEl.innerText = "Summary Table: All Matching Materials (Ranked by Spend)";
-            //     const matAgg = {};
-            //     filteredSubset.forEach(d => {
-            //         const mat = d['Material Name'] || 'Unassigned';
-            //         if (!matAgg[mat]) matAgg[mat] = { spend: 0, savings: 0, subCat: d['Sub Category']||'N/A' };
-            //         matAgg[mat].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
-            //         matAgg[mat].savings += calcRowSavings(d);
-            //     });
-            //     const sortedMatKeys = Object.keys(matAgg).sort((a,b) => matAgg[b].spend - matAgg[a].spend);
-            //     const top5Keys = sortedMatKeys.slice(0, 5);
-            //     chartConfig = {
-            //         type: 'bar',
-            //         data: {
-            //             labels: top5Keys.map(k => k.substring(0, 20)),
-            //             datasets: [
-            //                 { label: 'Spend ($)', data: top5Keys.map(k => matAgg[k].spend), backgroundColor: '#6366f1', borderRadius: 4 },
-            //                 { label: 'Savings ($)', data: top5Keys.map(k => matAgg[k].savings), backgroundColor: '#10b981', borderRadius: 4 }
-            //             ]
-            //         },
-            //         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
-            //     };
-            //     const headers = ["Material Name", "Sub Category", "Total Spend (USD)", "Total Savings (USD)", "ROI Ratio"];
-            //     const rows = sortedMatKeys.map(mat => {
-            //         const spend = matAgg[mat].spend;
-            //         const sav = matAgg[mat].savings;
-            //         const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
-            //         return [mat, matAgg[mat].subCat, '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}), ratio];
-            //     });
-            //     renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+            } else if (key === 'sec-heatmap') {
+                isKpiModal = true;
+                titleEl.innerText = "Initiative Efficiency & ROI Rankings";
+                tableTitleEl.innerText = "Initiative Types Ranked by Savings Efficiency Ratio (Savings / Spend)";
 
-            // } else if (key === 'chartBubbleMatrix') {
-            //     titleEl.innerText = "Initiative Efficiency & Bubble Matrix Analysis";
-            //     tableTitleEl.innerText = "Sub Category vs Initiative Efficiency Rankings";
-            //     if (charts['chartBubbleMatrix']) {
-            //         const source = charts['chartBubbleMatrix'];
-            //         chartConfig = {
-            //             type: source.config.type,
-            //             data: JSON.parse(JSON.stringify(source.config.data)),
-            //             options: { ...source.config.options, maintainAspectRatio: false }
-            //         };
-            //     }
-            //     const headers = ["Initiative Type", "Sub Category", "Total Spend (USD)", "Total Savings (USD)", "Avg Row ROI"];
-            //     const initSubAgg = {};
-            //     filteredSubset.forEach(d => {
-            //         const init = d['Initiative Type'] || 'Unassigned';
-            //         const sub = d['Sub Category'] || 'Unassigned';
-            //         const key = `${init}___${sub}`;
-            //         if (!initSubAgg[key]) initSubAgg[key] = { init: init, sub: sub, spend: 0, savings: 0, ratioSum: 0, count: 0 };
-            //         const spend = Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
-            //         const sav = calcRowSavings(d);
-            //         const rowRatio = spend > 0 ? (sav / spend) : 0;
-            //         initSubAgg[key].spend += spend;
-            //         initSubAgg[key].savings += sav;
-            //         initSubAgg[key].ratioSum += rowRatio;
-            //         initSubAgg[key].count += 1;
-            //     });
-            //     const sortedKeys = Object.keys(initSubAgg).sort((a,b) => (initSubAgg[b].ratioSum/initSubAgg[b].count) - (initSubAgg[a].ratioSum/initSubAgg[a].count));
-            //     const rows = sortedKeys.map(k => {
-            //         const item = initSubAgg[k];
-            //         const avgRatio = item.count > 0 ? ((item.ratioSum / item.count) * 100).toFixed(1) + '%' : '0.0%';
-            //         return [item.init, item.sub, '$' + item.spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + item.savings.toLocaleString(undefined, {minimumFractionDigits: 2}), avgRatio];
-            //     });
-            //     renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+                const initAgg = {};
+                filteredSubset.forEach(d => {
+                    const init = d['Initiative Type'] || 'Unassigned';
+                    if (!initAgg[init]) initAgg[init] = { spend: 0, savings: 0, count: 0 };
+                    initAgg[init].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                    initAgg[init].savings += calcRowSavings(d);
+                    initAgg[init].count += 1;
+                });
 
-            } else if (key === 'chartMonthlySpend') {
-                titleEl.innerText = "Monthly Projected Savings Breakdown";
-                tableTitleEl.innerText = "Monthly Savings Summary Table";
-                
-                const standardMonths = [
-                    { keyPart: 'oct 26', label: "Oct '26" },
-                    { keyPart: 'nov 26', label: "Nov '26" },
-                    { keyPart: 'dec 26', label: "Dec '26" },
-                    { keyPart: 'jan 27', label: "Jan '27" },
-                    { keyPart: 'feb 27', label: "Feb '27" },
-                    { keyPart: 'mar 27', label: "Mar '27" },
-                    { keyPart: 'apr 27', label: "Apr '27" },
-                    { keyPart: 'may 27', label: "May '27" },
-                    { keyPart: 'jun 27', label: "Jun '27" },
-                    { keyPart: 'jul 27', label: "Jul '27" },
-                    { keyPart: 'aug 27', label: "Aug '27" },
-                    { keyPart: 'sep 27', label: "Sep '27" }
-                ];
+                const sortedInits = Object.keys(initAgg).sort((a, b) => {
+                    const effA = initAgg[a].spend > 0 ? (initAgg[a].savings / initAgg[a].spend) : 0;
+                    const effB = initAgg[b].spend > 0 ? (initAgg[b].savings / initAgg[b].spend) : 0;
+                    return effB - effA;
+                });
 
-                const monthlySavingsMap = {};
-                standardMonths.forEach(m => monthlySavingsMap[m.label] = 0);
+                const headers = ["Initiative Type", "Active Records", "Total Spend (USD)", "Total Savings (USD)", "Efficiency Ratio (%)"];
+                const rows = sortedInits.map(init => {
+                    const item = initAgg[init];
+                    const ratio = item.spend > 0 ? ((item.savings / item.spend) * 100).toFixed(1) + '%' : '0.0%';
+                    return [
+                        init,
+                        item.count + ' items',
+                        '$' + item.spend.toLocaleString(undefined, {minimumFractionDigits: 2}),
+                        '$' + item.savings.toLocaleString(undefined, {minimumFractionDigits: 2}),
+                        ratio
+                    ];
+                });
+                renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
 
-                if (filteredSubset.length > 0) {
-                    const sampleRow = filteredSubset[0];
-                    Object.keys(sampleRow).forEach(k => {
-                        const lowerK = k.toLowerCase();
-                        if (lowerK.includes('saving') && !lowerK.includes('actual')) {
-                            standardMonths.forEach(m => {
-                                if (lowerK.includes(m.keyPart)) {
-                                    filteredSubset.forEach(d => {
-                                        monthlySavingsMap[m.label] += Number(d[k] || 0);
-                                    });
-                                }
-                            });
-                        }
+            } else {
+                chartWrapper.style.display = 'flex';
+
+                if (key === 'chartSubCat') {
+                    titleEl.innerText = "Sub Category Spend & Savings Analysis";
+                    tableTitleEl.innerText = "Sub Category Summary Breakdown";
+                    const subCatAgg = {};
+                    filteredSubset.forEach(d => {
+                        const sub = d['Sub Category'] || 'Unassigned';
+                        if (!subCatAgg[sub]) subCatAgg[sub] = { spend: 0, savings: 0 };
+                        subCatAgg[sub].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                        subCatAgg[sub].savings += calcRowSavings(d);
                     });
+                    chartConfig = {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(subCatAgg),
+                            datasets: [
+                                { label: 'Spend ($)', data: Object.values(subCatAgg).map(v => v.spend), backgroundColor: '#4f46e5', borderRadius: 4 },
+                                { label: 'Savings ($)', data: Object.values(subCatAgg).map(v => v.savings), backgroundColor: '#10b981', borderRadius: 4 }
+                            ]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+                    };
+                    const headers = ["Sub Category", "Total Spend (USD)", "Total Savings (USD)", "ROI Efficiency"];
+                    const rows = Object.keys(subCatAgg).map(sub => {
+                        const spend = subCatAgg[sub].spend;
+                        const sav = subCatAgg[sub].savings;
+                        const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
+                        return [sub, '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}), ratio];
+                    });
+                    renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+                } else if (key === 'chartTopMaterials') {
+                    titleEl.innerText = "Top Materials Spend & Savings Analysis";
+                    tableTitleEl.innerText = "Top Materials Ranked by Spend";
+                    const matAgg = {};
+                    filteredSubset.forEach(d => {
+                        const mat = d['Material Name'] || 'Unassigned';
+                        if (!matAgg[mat]) matAgg[mat] = { spend: 0, savings: 0, subCat: d['Sub Category']||'N/A' };
+                        matAgg[mat].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                        matAgg[mat].savings += calcRowSavings(d);
+                    });
+                    const sortedMatKeys = Object.keys(matAgg).sort((a,b) => matAgg[b].spend - matAgg[a].spend);
+                    const top5Keys = sortedMatKeys.slice(0, 5);
+                    chartConfig = {
+                        type: 'bar',
+                        data: {
+                            labels: top5Keys.map(k => k.substring(0, 20)),
+                            datasets: [
+                                { label: 'Spend ($)', data: top5Keys.map(k => matAgg[k].spend), backgroundColor: '#6366f1', borderRadius: 4 },
+                                { label: 'Savings ($)', data: top5Keys.map(k => matAgg[k].savings), backgroundColor: '#10b981', borderRadius: 4 }
+                            ]
+                        },
+                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+                    };
+                    const headers = ["Material Name", "Sub Category", "Total Spend (USD)", "Total Savings (USD)", "ROI Ratio"];
+                    const rows = sortedMatKeys.map(mat => {
+                        const spend = matAgg[mat].spend;
+                        const sav = matAgg[mat].savings;
+                        const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
+                        return [mat, matAgg[mat].subCat, '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}), ratio];
+                    });
+                    renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+                } else if (key === 'chartMonthlySpend') {
+                    titleEl.innerText = "Monthly Projected Savings Breakdown";
+                    tableTitleEl.innerText = "Monthly Savings Summary Table";
+                    
+                    const standardMonths = [
+                        { keyPart: 'oct 26', label: "Oct '26" },
+                        { keyPart: 'nov 26', label: "Nov '26" },
+                        { keyPart: 'dec 26', label: "Dec '26" },
+                        { keyPart: 'jan 27', label: "Jan '27" },
+                        { keyPart: 'feb 27', label: "Feb '27" },
+                        { keyPart: 'mar 27', label: "Mar '27" },
+                        { keyPart: 'apr 27', label: "Apr '27" },
+                        { keyPart: 'may 27', label: "May '27" },
+                        { keyPart: 'jun 27', label: "Jun '27" },
+                        { keyPart: 'jul 27', label: "Jul '27" },
+                        { keyPart: 'aug 27', label: "Aug '27" },
+                        { keyPart: 'sep 27', label: "Sep '27" }
+                    ];
+
+                    const monthlySavingsMap = {};
+                    standardMonths.forEach(m => monthlySavingsMap[m.label] = 0);
+
+                    if (filteredSubset.length > 0) {
+                        const sampleRow = filteredSubset[0];
+                        Object.keys(sampleRow).forEach(k => {
+                            const lowerK = k.toLowerCase();
+                            if (lowerK.includes('saving') && !lowerK.includes('actual')) {
+                                standardMonths.forEach(m => {
+                                    if (lowerK.includes(m.keyPart)) {
+                                        filteredSubset.forEach(d => {
+                                            monthlySavingsMap[m.label] += Number(d[k] || 0);
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    chartConfig = {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(monthlySavingsMap),
+                            datasets: [{
+                                label: 'Savings ($)',
+                                data: Object.values(monthlySavingsMap),
+                                backgroundColor: '#10b981',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+                    };
+
+                    const headers = ["Month Period", "Projected Savings (USD)"];
+                    const rows = Object.keys(monthlySavingsMap).map(m => [
+                        m,
+                        '$' + monthlySavingsMap[m].toLocaleString(undefined, {minimumFractionDigits: 2})
+                    ]);
+                    renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
                 }
 
-                chartConfig = {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(monthlySavingsMap),
-                        datasets: [{
-                            label: 'Savings ($)',
-                            data: Object.values(monthlySavingsMap),
-                            backgroundColor: '#10b981',
-                            borderRadius: 4
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
-                };
-
-                const headers = ["Month Period", "Projected Savings (USD)"];
-                const rows = Object.keys(monthlySavingsMap).map(m => [
-                    m,
-                    '$' + monthlySavingsMap[m].toLocaleString(undefined, {minimumFractionDigits: 2})
-                ]);
-                renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+                charts['modalChartCanvas'] = new Chart(ctx, chartConfig);
             }
 
-            charts['modalChartCanvas'] = new Chart(ctx, chartConfig);
+            if (isKpiModal) {
+                chartWrapper.style.display = 'none';
+            } else {
+                chartWrapper.style.display = 'flex';
+            }
+
+            modal.classList.remove('hidden');
         }
-
-        // Toggle chart wrapper visibility cleanly
-        if (isKpiModal) {
-            chartWrapper.style.display = 'none';
-        } else {
-            chartWrapper.style.display = 'flex';
-        }
-
-        modal.classList.remove('hidden');
-    }
-
         function closeModal() {
             document.getElementById('drilldown-modal').classList.add('hidden');
             if (charts['modalChartCanvas']) {
