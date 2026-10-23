@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archroma Supply Chain & Procurement Analytics Control Center</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (xlsx) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        html { scroll-behavior: smooth; }
+
+        /* 👉 PASTE YOUR @media print BLOCK RIGHT HERE */
+       @media print {
+            /* 1. Hide Sidebar, Print Buttons, Search, and Modals */
+            aside, button, #drilldown-modal, #table-search, .no-print {
+                display: none !important;
+            }
+
+            /* 2. Reset Page Container & Layout Locks */
+            body, html {
+                background-color: #ffffff !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            main {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 10px !important;
+                overflow: visible !important;
+                float: none !important;
+            }
+
+            /* 3. Force Grid Elements into Full Page Width */
+            .grid {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .grid > div, section {
+                width: 100% !important;
+                margin-bottom: 20px !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            /* 4. Fix Chart Canvases so right-side charts display cleanly */
+            canvas {
+                max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+            }
+
+            /* 5. Expand Scrollable Containers and Heatmap Table */
+            .overflow-x-auto, .max-h-96, .max-h-60, #heatmap-container {
+                max-height: none !important;
+                overflow: visible !important;
+                width: 100% !important;
+            }
+
+            table {
+                width: 100% !important;
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased flex h-screen overflow-hidden">
+
+    <!-- Sticky Side Navigation Bar -->
+    <aside class="w-64 bg-indigo-950 text-white flex flex-col shadow-xl z-20 flex-shrink-0">
+        <div class="p-5 border-b border-indigo-900 flex items-center space-x-3">
+            <svg class="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            <div>
+                <h1 class="text-sm font-bold tracking-wide">Archroma Analytics</h1>
+                <p class="text-[10px] text-indigo-300">Supply Chain Control Center</p>
+            </div>
+        </div>
+
+        <!-- Sidebar Content Area -->
+        <div class="p-4 overflow-y-auto flex-grow space-y-5 border-b border-indigo-900">
+            <!-- Global Filters -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center space-x-1">
+                        <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        <span>Global Filters</span>
+                    </h2>
+                    <button onclick="resetFilters()" class="text-[10px] text-indigo-300 hover:text-white underline">Reset</button>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-indigo-200 mb-1">Plant Region</label>
+                    <select id="filter-region" onchange="applyFilters()" class="w-full text-xs bg-indigo-900 text-white border-indigo-800 rounded-lg p-2 border focus:ring-indigo-500">
+                        <option value="ALL">All Regions</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-indigo-200 mb-1">Sub Category</label>
+                    <select id="filter-subcat" onchange="applyFilters()" class="w-full text-xs bg-indigo-900 text-white border-indigo-800 rounded-lg p-2 border focus:ring-indigo-500">
+                        <option value="ALL">All Sub Categories</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-indigo-200 mb-1">Category Manager</label>
+                    <select id="filter-manager" onchange="applyFilters()" class="w-full text-xs bg-indigo-900 text-white border-indigo-800 rounded-lg p-2 border focus:ring-indigo-500">
+                        <option value="ALL">All Managers</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-indigo-200 mb-1">Material Name</label>
+                    <select id="filter-material" onchange="applyFilters()" class="w-full text-xs bg-indigo-900 text-white border-indigo-800 rounded-lg p-2 border focus:ring-indigo-500">
+                        <option value="ALL">All Materials</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-indigo-200 mb-1">Dyes / Chem</label>
+                    <select id="filter-dyeschem" onchange="applyFilters()" class="w-full text-xs bg-indigo-900 text-white border-indigo-800 rounded-lg p-2 border focus:ring-indigo-500">
+                        <option value="ALL">All Dyes/Chem</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Page Section Navigation Menu -->
+            <div class="pt-3 border-t border-indigo-900 space-y-2">
+                <label class="block text-[11px] font-bold text-indigo-300 uppercase tracking-wider">Quick Page Navigation</label>
+                <div class="space-y-1">
+                    <button onclick="scrollToSection('sec-kpis')" class="w-full text-left text-xs bg-indigo-900/50 hover:bg-indigo-800 text-indigo-200 px-2.5 py-1.5 rounded transition flex items-center space-x-2">
+                        <span>📊</span><span>Executive KPI Summary</span>
+                    </button>
+                    <button onclick="scrollToSection('sec-charts')" class="w-full text-left text-xs bg-indigo-900/50 hover:bg-indigo-800 text-indigo-200 px-2.5 py-1.5 rounded transition flex items-center space-x-2">
+                        <span>📈</span><span>Analytics Charts</span>
+                    </button>
+                    <button onclick="scrollToSection('sec-heatmap')" class="w-full text-left text-xs bg-indigo-900/50 hover:bg-indigo-800 text-indigo-200 px-2.5 py-1.5 rounded transition flex items-center space-x-2">
+                        <span>🔥</span><span>ROI Efficiency Heatmap</span>
+                    </button>
+                    <button onclick="scrollToSection('sec-table')" class="w-full text-left text-xs bg-indigo-900/50 hover:bg-indigo-800 text-indigo-200 px-2.5 py-1.5 rounded transition flex items-center space-x-2">
+                        <span>📋</span><span>Data Registry Table</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Footer Action -->
+        <div class="p-4 border-t border-indigo-900 space-y-2">
+            <label for="excel-upload" class="cursor-pointer bg-indigo-700 hover:bg-indigo-600 text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <span>Upload New Excel</span>
+            </label>
+            <input id="excel-upload" type="file" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)">
+            <button onclick="exportDataCSV()" class="w-full bg-emerald-700 hover:bg-emerald-600 text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Export Filtered Data (CSV)</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="main-scroll-container" class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <!-- Header Bar -->
+        <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">Procurement & Supply Chain Performance</h2>
+                <p class="text-xs text-gray-500">Live analytical insights, savings tracking, and ROI risk monitoring.</p>
+            </div>
+            <button onclick="window.print()" class="bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-700 px-3 py-2 rounded-lg transition flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <span>Print / Save PDF</span>
+            </button>
+        </div>
+
+        <!-- Local Executive Insights Banner -->
+        <div id="insights-banner" class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+            <div class="flex items-center space-x-2 mb-1">
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-amber-900">Automated Risk & Efficiency Scanner</h3>
+            </div>
+            <p id="insights-text" class="text-xs text-amber-800 leading-relaxed">Analyzing dataset metrics...</p>
+        </div>
+
+        <!-- Section 1: Executive KPI Scorecards -->
+        <section id="sec-kpis" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div onclick="openModal('kpi_spend')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between cursor-pointer hover:border-indigo-500 hover:shadow transition group">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total YTD Spend 🔍</span>
+                    <span class="text-gray-400 group-hover:text-indigo-600">ℹ️</span>
+                </div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="kpi-spend" class="text-2xl font-bold text-indigo-900">$0.00</span>
+                    <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">USD</span>
+                </div>
+            </div>
+            <div onclick="openModal('kpi_qty')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between cursor-pointer hover:border-indigo-500 hover:shadow transition group">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total PO Quantity 🔍</span>
+                    <span class="text-gray-400 group-hover:text-indigo-600">ℹ️</span>
+                </div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="kpi-qty" class="text-2xl font-bold text-indigo-900">0</span>
+                    <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Kgs</span>
+                </div>
+            </div>
+            <div onclick="openModal('kpi_savings')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between cursor-pointer hover:border-indigo-500 hover:shadow transition group">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Projected Savings 🔍</span>
+                    <span class="text-gray-400 group-hover:text-indigo-600">ℹ️</span>
+                </div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="kpi-savings" class="text-2xl font-bold text-emerald-700">$0.00</span>
+                    <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Total</span>
+                </div>
+            </div>
+            <div onclick="openModal('kpi_items')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between cursor-pointer hover:border-indigo-500 hover:shadow transition group">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Active Line Items 🔍</span>
+                    <span class="text-gray-400 group-hover:text-indigo-600">ℹ️</span>
+                </div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="kpi-items" class="text-2xl font-bold text-indigo-900">0</span>
+                    <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Records</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Analytics Charts Grid -->
+        <section id="sec-charts" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div onclick="openModal('chartSubCat')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:border-indigo-500 hover:shadow transition">
+                <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Spend by Sub Category 🔍</span>
+                    <span class="text-xs text-gray-400 font-normal">USD</span>
+                </h3>
+                <div class="relative h-72"><canvas id="chartSubCat"></canvas></div>
+            </div>
+            <!-- Real Geographical World Map View -->
+            <div onclick="openModal('sec-map')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:border-indigo-500 hover:shadow transition flex flex-col justify-between group">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-800 flex items-center space-x-1.5">
+                            <span>🗺️</span>
+                            <span>Global Geographical Regional Spend Map 🔍</span>
+                        </h3>
+                        <p class="text-[11px] text-gray-500">Spend breakdown mapped across real geographic coordinates.</p>
+                    </div>
+                    <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Live Regional View</span>
+                </div>
+                <!-- Real World Map Canvas / Image Background Container -->
+                <div class="relative w-full h-64 bg-slate-900 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg" class="absolute inset-0 w-full h-full object-contain opacity-25 filter invert" alt="World Map">
+                    <svg viewBox="0 0 1000 500" class="absolute inset-0 w-full h-full">
+                        <g id="map-nodes"></g>
+                    </svg>
+                </div>
+                <!-- Regional Legend Grid -->
+                <div id="map-legend" class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3 text-[10px]">
+                    <!-- Dynamic Legend Cards -->
+                </div>
+            </div>
+            <div onclick="openModal('chartTopMaterials')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:border-indigo-500 hover:shadow transition">
+                <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Top Materials by Spend 🔍</span>
+                    <span class="text-xs text-gray-400 font-normal">USD</span>
+                </h3>
+                <div class="relative h-72"><canvas id="chartTopMaterials"></canvas></div>
+            </div>
+            <!-- Monthly Spend Trend Chart -->
+            <div onclick="openModal('chartMonthlySpend')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:border-indigo-500 hover:shadow transition">
+                <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Monthly Spend & Volume Trend 🔍</span>
+                    <span class="text-xs text-gray-400 font-normal">USD / Qty</span>
+                </h3>
+                <div class="relative h-72"><canvas id="chartMonthlySpend"></canvas></div>
+            </div>
+            <!-- <div onclick="openModal('chartBubbleMatrix')" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:border-indigo-500 hover:shadow transition">
+                <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Sub Category vs Initiative Type (Bubble) 🔍</span>
+                    <span class="text-xs text-gray-400 font-normal">Savings vs Spend</span>
+                </h3>
+                <div class="relative h-72"><canvas id="chartBubbleMatrix"></canvas></div>
+            </div> -->
+        </section>
+
+        <!-- Section 3: Savings Efficiency & Risk Heatmap -->
+        <section id="sec-heatmap" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:border-indigo-500 hover:shadow transition" onclick="openModal('sec-heatmap')">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800">🔥 Savings Efficiency & ROI Heatmap</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Initiative Type ($Y$-Axis) vs. Sub Category ($X$-Axis). Darker emerald green cells indicate higher ROI efficiency (Averaged Row Savings/Spend Ratio).</p>
+                </div>
+                <!-- Simple & Effective Click Prompt -->
+                <div class="mt-2 sm:mt-0 flex items-center space-x-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
+                    <span class="animate-pulse">👉</span>
+                    <span>Click heatmap for detailed breakdown</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 text-[11px] text-gray-500 mb-3">
+                <span class="flex items-center"><span class="w-3 h-3 bg-emerald-100 rounded mr-1"></span> Low Spend Volume</span>
+                <span class="flex items-center"><span class="w-3 h-3 bg-emerald-600 rounded mr-1"></span> High Spend Volume</span>
+            </div>
+            <div id="heatmap-container" class="overflow-x-auto mt-2">
+                <!-- Dynamically rendered heatmap grid -->
+            </div>
+        </section>
+
+        <!-- Section 4: Data Table Section -->
+        <section id="sec-table" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                <h3 class="text-sm font-bold text-gray-800">Filtered Master Data Registry</h3>
+                <input type="text" id="table-search" placeholder="Search records..." onkeyup="filterTable()" class="text-xs border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-64 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div class="overflow-x-auto max-h-96 border border-gray-100 rounded-lg">
+                <table id="data-table" class="min-w-full divide-y divide-gray-200 text-xs">
+                    <thead class="bg-gray-50 sticky top-0"><tr id="table-head"></tr></thead>
+                    <tbody id="data-body" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Context-Aware Drill-Down Pop-Up Modal -->
+    <div id="drilldown-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden" onclick="handleModalBackdropClick(event)">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+            <!-- Modal Header -->
+            <div class="bg-indigo-900 text-white px-6 py-4 flex items-center justify-between">
+                <div>
+                    <span id="modal-category" class="text-[10px] uppercase tracking-wider bg-indigo-700 px-2 py-0.5 rounded font-semibold">Context-Aware Drill Down</span>
+                    <h3 id="modal-title" class="text-base font-bold mt-1">Visual Breakdown</h3>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="closeModal()" class="p-2 bg-indigo-800 hover:bg-indigo-700 rounded-lg transition" title="Close (ESC)">✕</button>
+                </div>
+            </div>
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+                <div id="modalChartWrapper" class="relative h-80 bg-gray-50 rounded-xl p-4 border border-gray-200 flex items-center justify-center">
+                    <canvas id="modalChartCanvas"></canvas>
+                </div>
+                <div>
+                    <h4 id="modal-table-title" class="text-xs font-bold text-gray-700 uppercase mb-2">Filtered Summary Data</h4>
+                    <div class="overflow-x-auto max-h-60 border border-gray-200 rounded-lg text-xs">
+                        <table id="modal-data-table" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0"><tr id="modal-table-head"></tr></thead>
+                            <tbody id="modal-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let rawData = [
+            {"Mat+Plant": "286009308125811", "Material": 28600930812, "Material Name": "Ultraphor PWC R pdr 0020", "Plant": "5811", "Plant Region": "North America", "Sub Category": "Process & OBA Chemicals", "Silicones": "Process & OBA", "Catergory Manager": "Ben Mo", "Dyes/Chem": "Chemicals", "Material Classification": "Non_Index", "Ytd Sep26 12mths PO Qty (Kgs)": 460000, "Ytd Sep26 12mths PO Spends (USD)": 8199069, "Ytd Sep26 Avg Unit Px": 17.824063, "Stage Gate": "4-Go Live", "Probability of Success": 1.0, "July- Sep26 Q4' (Q4 '26 PO Qty)": 80000, "July- Sep26 Q4' (Q4 '26 PO Spend)": 1449063, "July- Sep26 Q4' (Q4 26 Avg Unit Px)": 18.113287, "Baseline PO price for FY27 Savings": 18.113287, "Explain exceptions": null, "FY26 Annualised Vol": 460000, "FY26 Annualised Spends (Adjusted Price)": 8332111.82, "Savings Start Month": "2027-01-01", "Carry over or New": "New", "Initiative Type": "New/alternative source/vendor", "Project Name/Supplier": "Hongda", "No Blank": "NO", "AOP27 Mkt Px Change $ - increase / (decrease)": null, "AOP27 Productivity Savings $/kg - (decrease)": -3.0, "AOP27 Final Price": 15.113287, "AOP27 Volume\n(Vol can be changed)": 460000, "AOP27 Spends": 6952111.82, "Spends Delta (Fav) / Unfav": -1380000.0, "Volume Impact": 0.0, "Market Effect": 0.0, "Annual Productivity": -1380000.0, "Annual Productivity ( in +ve)": 1.38, "check": 0.0, "Oct 26 (Vol)": 38333.333333, "Nov 26 (Vol)": 38333.333333, "Dec 26 (Vol)": 38333.333333, "Jan 27 (Vol)": 38333.333333, "Feb 27 (Vol)": 38333.333333, "Mar 27 (Vol)": 38333.333333, "Apr 27 (Vol)": 38333.333333, "May 27 (Vol)": 38333.333333, "Jun 27 (Vol)": 38333.333333, "Jul 27 (Vol)": 38333.333333, "Aug 27 (Vol)": 38333.333333, "Sep 27 (Vol)": 38333.333333, "Oct 26 (Saving)": 0.0, "Nov 26 (Saving)": 0.0, "Dec 26 (Saving)": 0.0, "Jan 27 (Saving)": 115000.0, "Feb 27 (Saving)": 115000.0, "Mar 27 (Saving)": 115000.0, "Apr 27 (Saving)": 115000.0, "May 27 (Saving)": 115000.0, "Jun 27 (Saving)": 115000.0, "Jul 27 (Saving)": 115000.0, "Aug 27 (Saving)": 115000.0, "Sep 27 (Saving)": 115000.0, "Actual Savings (YTD)": null},
+            {"Mat+Plant": "2417472104", "Material": 241747, "Material Name": "Perfluorhexylethylmethacrylat", "Plant": "2104", "Plant Region": "EMEA", "Sub Category": "Fluoro Chemicals", "Silicones": "Flouro Chem", "Catergory Manager": "Charles Allotey", "Dyes/Chem": "Chemicals", "Material Classification": "Non_Index", "Ytd Sep26 12mths PO Qty (Kgs)": 203600, "Ytd Sep26 12mths PO Spends (USD)": 9425250, "Ytd Sep26 Avg Unit Px": 46.292976, "Stage Gate": "4-Go Live", "Probability of Success": 1.0, "July- Sep26 Q4' (Q4 '26 PO Qty)": 82000, "July- Sep26 Q4' (Q4 '26 PO Spend)": 3765713, "July- Sep26 Q4' (Q4 26 Avg Unit Px)": 45.923329, "Baseline PO price for FY27 Savings": 45.923329, "Explain exceptions": null, "FY26 Annualised Vol": 203600, "FY26 Annualised Spends (Adjusted Price)": 9349990.0, "Savings Start Month": "2026-04-01", "Carry over or New": "Carry over", "Initiative Type": "Respecification", "Project Name/Supplier": "Zhongfu", "No Blank": "NO", "AOP27 Mkt Px Change $ - increase / (decrease)": null, "AOP27 Productivity Savings $/kg - (decrease)": -2.98, "AOP27 Final Price": 42.943329, "AOP27 Volume\n(Vol can be changed)": 203600, "AOP27 Spends": 8743261.98, "Spends Delta (Fav) / Unfav": -606728.02, "Volume Impact": 0.0, "Market Effect": 0.0, "Annual Productivity": -606728.02, "Annual Productivity ( in +ve)": 0.606728, "check": 0.0, "Oct 26 (Vol)": 16966.666667, "Nov 26 (Vol)": 16966.666667, "Dec 26 (Vol)": 16966.666667, "Jan 27 (Vol)": 16966.666667, "Feb 27 (Vol)": 16966.666667, "Mar 27 (Vol)": 16966.666667, "Apr 27 (Vol)": 16966.666667, "May 27 (Vol)": 16966.666667, "Jun 27 (Vol)": 16966.666667, "Jul 27 (Vol)": 16966.666667, "Aug 27 (Vol)": 16966.666667, "Sep 27 (Vol)": 16966.666667, "Oct 26 (Saving)": 50560.666667, "Nov 26 (Saving)": 50560.666667, "Dec 26 (Saving)": 50560.666667, "Jan 27 (Saving)": 50560.666667, "Feb 27 (Saving)": 50560.666667, "Mar 27 (Saving)": 50560.666667, "Apr 27 (Saving)": 0.0, "May 27 (Saving)": 0.0, "Jun 27 (Saving)": 0.0, "Jul 27 (Saving)": 0.0, "Aug 27 (Saving)": 0.0, "Sep 27 (Saving)": 0.0, "Actual Savings (YTD)": null},
+            {"Mat+Plant": "2897975504", "Material": 289797, "Material Name": "FORMAZANE BLUE F-R MOIST", "Plant": "5504", "Plant Region": "South East Asia", "Sub Category": "Reactive Dyes & Intermediates", "Silicones": "Reactive Dyes", "Catergory Manager": "Bhavesh Thakkar", "Dyes/Chem": "Dyes", "Material Classification": "Non_Index", "Ytd Sep26 12mths PO Qty (Kgs)": 1161557, "Ytd Sep26 12mths PO Spends (USD)": 7550181, "Ytd Sep26 Avg Unit Px": 6.500052, "Stage Gate": "4-Go Live", "Probability of Success": 1.0, "July- Sep26 Q4' (Q4 '26 PO Qty)": 254268, "July- Sep26 Q4' (Q4 '26 PO Spend)": 1814778, "July- Sep26 Q4' (Q4 26 Avg Unit Px)": 7.137265, "Baseline PO price for FY27 Savings": 7.137265, "Explain exceptions": null, "FY26 Annualised Vol": 1161557, "FY26 Annualised Spends (Adjusted Price)": 8290340.23, "Savings Start Month": "2026-10-01", "Carry over or New": "New", "Initiative Type": "Bulk Buying", "Project Name/Supplier": "Ambica", "No Blank": "NO", "AOP27 Mkt Px Change $ - increase / (decrease)": 0.5, "AOP27 Productivity Savings $/kg - (decrease)": -0.4, "AOP27 Final Price": 7.237265, "AOP27 Volume\n(Vol can be changed)": 1161557, "AOP27 Spends": 8406495.23, "Spends Delta (Fav) / Unfav": 116155.0, "Volume Impact": 0.0, "Market Effect": 580778.5, "Annual Productivity": -464622.8, "Annual Productivity ( in +ve)": 0.464623, "check": 0.0, "Oct 26 (Vol)": 96796.416667, "Nov 26 (Vol)": 96796.416667, "Dec 26 (Vol)": 96796.416667, "Jan 27 (Vol)": 96796.416667, "Feb 27 (Vol)": 96796.416667, "Mar 27 (Vol)": 96796.416667, "Apr 27 (Vol)": 96796.416667, "May 27 (Vol)": 96796.416667, "Jun 27 (Vol)": 96796.416667, "Jul 27 (Vol)": 96796.416667, "Aug 27 (Vol)": 96796.416667, "Sep 27 (Vol)": 96796.416667, "Oct 26 (Saving)": 38718.566667, "Nov 26 (Saving)": 38718.566667, "Dec 26 (Saving)": 38718.566667, "Jan 27 (Saving)": 38718.566667, "Feb 27 (Saving)": 38718.566667, "Mar 27 (Saving)": 38718.566667, "Apr 27 (Saving)": 38718.566667, "May 27 (Saving)": 38718.566667, "Jun 27 (Saving)": 38718.566667, "Jul 27 (Saving)": 38718.566667, "Aug 27 (Saving)": 38718.566667, "Sep 27 (Saving)": 38718.566667, "Actual Savings (YTD)": null}
+        ];
+
+        let charts = {};
+        let currentFilteredData = [];
+
+        function initDashboard() {
+            populateDropdowns();
+            applyFilters();
+        }
+
+        function scrollToSection(sectionId) {
+            const el = document.getElementById(sectionId);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function populateDropdowns() {
+            const regions = [...new Set(rawData.map(d => d['Plant Region']).filter(Boolean))].sort();
+            const subcats = [...new Set(rawData.map(d => d['Sub Category']).filter(Boolean))].sort();
+            const managers = [...new Set(rawData.map(d => d['Catergory Manager']).filter(Boolean))].sort();
+            const materials = [...new Set(rawData.map(d => d['Material Name']).filter(Boolean))].sort();
+            const dyesChems = [...new Set(rawData.map(d => d['Dyes/Chem']).filter(Boolean))].sort();
+            
+            fillSelect('filter-region', regions);
+            fillSelect('filter-subcat', subcats);
+            fillSelect('filter-manager', managers);
+            fillSelect('filter-material', materials);
+            fillSelect('filter-dyeschem', dyesChems);
+        }
+
+        function fillSelect(id, items) {
+            const el = document.getElementById(id);
+            el.innerHTML = `<option value="ALL">All</option>` + items.map(i => `<option value="${i}">${i}</option>`).join('');
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-region').value = 'ALL';
+            document.getElementById('filter-subcat').value = 'ALL';
+            document.getElementById('filter-manager').value = 'ALL';
+            document.getElementById('filter-material').value = 'ALL';
+            document.getElementById('filter-dyeschem').value = 'ALL';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const reg = document.getElementById('filter-region').value;
+            const sub = document.getElementById('filter-subcat').value;
+            const mgr = document.getElementById('filter-manager').value;
+            const mat = document.getElementById('filter-material').value;
+
+            const dyes = document.getElementById('filter-dyeschem').value;
+
+            currentFilteredData = rawData.filter(d => {
+            return (reg === 'ALL' || d['Plant Region'] === reg) &&
+                (sub === 'ALL' || d['Sub Category'] === sub) &&
+                (mgr === 'ALL' || d['Catergory Manager'] === mgr) &&
+                (mat === 'ALL' || d['Material Name'] === mat) &&
+                (dyes === 'ALL' || d['Dyes/Chem'] === dyes); // Added filter
+        });
+
+            updateDashboard(currentFilteredData);
+            renderTable(currentFilteredData);
+            generateLocalInsights(currentFilteredData);
+            renderHeatmap(currentFilteredData);
+        }
+
+        function calcRowSavings(row) {
+            if (row['Total Projected Saving'] !== undefined && row['Total Projected Saving'] !== null) {
+                return Number(row['Total Projected Saving']) || 0;
+            }
+            let monthlySum = 0;
+            Object.keys(row).forEach(k => {
+                if (k.toLowerCase().includes('(saving)') && !k.toLowerCase().includes('actual')) {
+                    monthlySum += Number(row[k]) || 0;
+                }
+            });
+            return monthlySum;
+        }
+
+        function updateDashboard(data) {
+            let totalSpend = 0;
+            let totalQty = 0;
+            let totalSavings = 0;
+            let realizedSavings = 0;
+            let pipelineSavings = 0;
+
+            data.forEach(d => {
+                totalSpend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                totalQty += Number(d['Ytd Sep26 12mths PO Qty (Kgs)'] || 0);
+                const sav = calcRowSavings(d);
+                totalSavings += sav;
+                const gate = String(d['Stage Gate'] || '');
+                if (gate.includes('4')) {
+                    realizedSavings += sav;
+                } else {
+                    pipelineSavings += sav;
+                }
+            });
+
+            document.getElementById('kpi-spend').innerText = '$' + (totalSpend / 1000000).toFixed(2) + ' MUSD';
+            document.getElementById('kpi-qty').innerText = totalQty.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('kpi-savings').innerHTML = `$${(totalSavings / 1000000).toFixed(2)} MUSD <span class='block text-[10px] font-normal text-emerald-600'>Realized: $${(realizedSavings/1000000).toFixed(2)}M | Pipeline: $${(pipelineSavings/1000000).toFixed(2)}M</span>`;
+            document.getElementById('kpi-items').innerText = data.length;
+
+            renderCharts(data);
+        }
+
+        function renderCharts(data) {
+            const subcatMap = {};
+            data.forEach(d => {
+                const sub = d['Sub Category'] || 'Unassigned';
+                subcatMap[sub] = (subcatMap[sub] || 0) + Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+            });
+            updateChart('chartSubCat', 'bar', {
+                labels: Object.keys(subcatMap),
+                datasets: [{ label: 'Spend ($)', data: Object.values(subcatMap), backgroundColor: '#4f46e5', borderRadius: 6 }]
+            }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } });
+
+            // Real World Map Regional Coordinate Alignment
+            const regionCoordinates = {
+                "North America": { cx: 220, cy: 160 },
+                "South America": { cx: 320, cy: 330 },
+                "Latin America": { cx: 320, cy: 330 },
+                "EMEA":          { cx: 510, cy: 160 },
+                "Pakistan":      { cx: 640, cy: 210 },
+                "India":         { cx: 690, cy: 230 },
+                "South Asia":    { cx: 700, cy: 245 },
+                "North Asia":    { cx: 780, cy: 150 },
+                "Greater China": { cx: 780, cy: 170 },
+                "South East Asia": { cx: 790, cy: 270 },
+                "Rest of World": { cx: 880, cy: 360 }
+            };
+
+            const regionMap = {};
+            data.forEach(d => {
+                const reg = d['Plant Region'] || 'Rest of World';
+                if (!regionMap[reg]) regionMap[reg] = { spend: 0, count: 0 };
+                regionMap[reg].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                regionMap[reg].count += 1;
+            });
+
+            let totalGlobalSpend = Object.values(regionMap).reduce((acc, curr) => acc + curr.spend, 0) || 1;
+
+            const mapNodesGroup = document.getElementById('map-nodes');
+            const mapLegend = document.getElementById('map-legend');
+
+            if (mapNodesGroup && mapLegend) {
+                let svgHtml = '';
+                let legendHtml = '';
+
+                Object.keys(regionMap).forEach(reg => {
+                    const stats = regionMap[reg];
+                    const coords = regionCoordinates[reg] || { cx: 500, cy: 250 };
+                    const share = ((stats.spend / totalGlobalSpend) * 100).toFixed(0);
+                    const radius = Math.max(7, Math.min(20, Math.sqrt(stats.spend / totalGlobalSpend) * 22));
+
+                    svgHtml += `
+                        <g class="cursor-pointer group" onclick="document.getElementById('filter-region').value='${reg}'; applyFilters();">
+                            <circle cx="${coords.cx}" cy="${coords.cy}" r="${radius + 5}" fill="#818cf8" opacity="0.25" class="animate-pulse"></circle>
+                            <circle cx="${coords.cx}" cy="${coords.cy}" r="${radius}" fill="#4f46e5" stroke="#ffffff" stroke-width="1.5">
+                                <title>${reg}: $${(stats.spend/1000000).toFixed(2)}M (${share}% spend)</title>
+                            </circle>
+                            <rect x="${coords.cx - 35}" y="${coords.cy - radius - 16}" width="70" height="13" rx="3" fill="#0f172a" opacity="0.85"></rect>
+                            <text x="${coords.cx}" y="${coords.cy - radius - 7}" fill="#f8fafc" font-size="8" font-weight="700" text-anchor="middle">${reg}</text>
+                        </g>
+                    `;
+
+                    legendHtml += `
+                        <div onclick="document.getElementById('filter-region').value='${reg}'; applyFilters();" class="bg-gray-50 hover:bg-indigo-50 border border-gray-200 rounded p-1.5 text-center cursor-pointer transition">
+                            <div class="font-bold text-gray-800 truncate text-[11px]" title="${reg}">${reg}</div>
+                            <div class="text-indigo-600 font-semibold">$${(stats.spend/1000000).toFixed(1)}M</div>
+                        </div>
+                    `;
+                });
+
+                mapNodesGroup.innerHTML = svgHtml;
+                mapLegend.innerHTML = legendHtml;
+            }
+
+            const sortedMats = [...data].sort((a, b) => Number(b['Ytd Sep26 12mths PO Spends (USD)'] || 0) - Number(a['Ytd Sep26 12mths PO Spends (USD)'] || 0)).slice(0, 5);
+            updateChart('chartTopMaterials', 'bar', {
+                labels: sortedMats.map(d => (d['Material Name'] || '').toString().trim().substring(0, 22)),
+                datasets: [{ label: 'Spend ($)', data: sortedMats.map(d => Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0)), backgroundColor: '#6366f1', borderRadius: 6 }]
+            }, { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } });
+
+            // Dynamic Monthly Savings Aggregator
+            const standardMonths = [
+                { keyPart: 'oct 26', label: "Oct '26" },
+                { keyPart: 'nov 26', label: "Nov '26" },
+                { keyPart: 'dec 26', label: "Dec '26" },
+                { keyPart: 'jan 27', label: "Jan '27" },
+                { keyPart: 'feb 27', label: "Feb '27" },
+                { keyPart: 'mar 27', label: "Mar '27" },
+                { keyPart: 'apr 27', label: "Apr '27" },
+                { keyPart: 'may 27', label: "May '27" },
+                { keyPart: 'jun 27', label: "Jun '27" },
+                { keyPart: 'jul 27', label: "Jul '27" },
+                { keyPart: 'aug 27', label: "Aug '27" },
+                { keyPart: 'sep 27', label: "Sep '27" }
+            ];
+
+            const monthlySavingsMap = {};
+            standardMonths.forEach(m => monthlySavingsMap[m.label] = 0);
+
+            if (data.length > 0) {
+                const sampleRow = data[0];
+                Object.keys(sampleRow).forEach(k => {
+                    const lowerK = k.toLowerCase();
+                    if (lowerK.includes('saving') && !lowerK.includes('actual')) {
+                        standardMonths.forEach(m => {
+                            if (lowerK.includes(m.keyPart)) {
+                                data.forEach(d => {
+                                    monthlySavingsMap[m.label] += Number(d[k] || 0);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            updateChart('chartMonthlySpend', 'bar', {
+                labels: Object.keys(monthlySavingsMap),
+                datasets: [{
+                    label: 'Projected Savings ($)',
+                    data: Object.values(monthlySavingsMap),
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                }]
+            }, { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + (value >= 1000000 ? (value/1000000).toFixed(1) + 'M' : value >= 1000 ? (value/1000).toFixed(0) + 'k' : value);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        // Render ROI Efficiency Heatmap (Initiative Types on Y-Axis vs Sub Categories on X-Axis)
+        // Render Savings Efficiency Heatmap (Rows sorted by Weighted Efficiency %, Cell Green Intensity = Higher Spend $)
+        function renderHeatmap(data) {
+            const container = document.getElementById('heatmap-container');
+            const subcats = [...new Set(data.map(d => d['Sub Category'] || 'Unassigned'))].sort();
+            
+            if (subcats.length === 0 || data.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">No data available for heatmap.</p>';
+                return;
+            }
+
+            const cellMap = {};
+            const initTotals = {};
+            let maxCellSpend = 0.001;
+
+            // 1. Aggregate spend & savings metrics per cell and per initiative row
+            data.forEach(d => {
+                const init = d['Initiative Type'] || 'Unassigned';
+                const sub = d['Sub Category'] || 'Unassigned';
+                const key = `${init}___${sub}`;
+
+                if (!cellMap[key]) {
+                    cellMap[key] = { totalSpend: 0, totalSavings: 0, count: 0 };
+                }
+                if (!initTotals[init]) {
+                    initTotals[init] = { totalSpend: 0, totalSavings: 0 };
+                }
+
+                const spend = Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                const sav = calcRowSavings(d);
+
+                cellMap[key].totalSpend += spend;
+                cellMap[key].totalSavings += sav;
+                cellMap[key].count += 1;
+
+                initTotals[init].totalSpend += spend;
+                initTotals[init].totalSavings += sav;
+
+                // Track highest spend cell to calculate relative color intensity
+                if (cellMap[key].totalSpend > maxCellSpend) {
+                    maxCellSpend = cellMap[key].totalSpend;
+                }
+            });
+
+            // 2. Sort Initiative Types descending by Weighted Row Efficiency (Total Savings / Total Spend)
+            const sortedInitiatives = Object.keys(initTotals).sort((a, b) => {
+                const effA = initTotals[a].totalSpend > 0 ? (initTotals[a].totalSavings / initTotals[a].totalSpend) : 0;
+                const effB = initTotals[b].totalSpend > 0 ? (initTotals[b].totalSavings / initTotals[b].totalSpend) : 0;
+                return effB - effA;
+            });
+
+            // 3. Render HTML Table Grid
+            let html = `<table class="min-w-full divide-y divide-gray-200 text-xs">`;
+            html += `<thead class="bg-gray-50"><tr>`;
+            html += `<th class="px-3 py-2 text-left font-semibold text-gray-700">Initiative \\ Sub Category</th>`;
+            subcats.forEach(sub => {
+                html += `<th class="px-3 py-2 text-center font-semibold text-gray-700">${sub}</th>`;
+            });
+            html += `</tr></thead><tbody class="divide-y divide-gray-200 bg-white">`;
+
+            // Update Heatmap legend color indicator above the grid if needed:
+            // Change green indicator to purple: bg-purple-100 & bg-purple-600
+
+            sortedInitiatives.forEach(init => {
+                const rowSpend = initTotals[init].totalSpend;
+                const rowSav = initTotals[init].totalSavings;
+                html += `<tr><td class="px-3 py-2 font-medium text-gray-900 bg-gray-50">${init} <span class="text-[10px] text-purple-600 block">($${(rowSpend/1000).toFixed(0)}k Spend / $${(rowSav/1000).toFixed(0)}k Saving)</span></td>`;
+                
+                subcats.forEach(sub => {
+                    const key = `${init}___${sub}`;
+                    const cell = cellMap[key];
+                    if (!cell || cell.count === 0) {
+                        html += `<td class="px-3 py-2 text-center text-gray-300 bg-gray-50/50">-</td>`;
+                    } else {
+                        // Darker Purple = Higher Volume
+                        const intensity = Math.min(1, Math.max(0.12, cell.totalSpend / maxCellSpend));
+                        const bgStyle = `background-color: rgba(147, 51, 234, ${intensity}); color: ${intensity > 0.55 ? '#ffffff' : '#1f2937'};`;
+                        
+                        html += `<td class="px-3 py-2 text-center font-semibold transition cursor-pointer hover:opacity-80" style="${bgStyle}" title="Items: ${cell.count} | Spend: $${(cell.totalSpend/1000).toFixed(1)}k | Savings: $${(cell.totalSavings/1000).toFixed(1)}k">`;
+                        html += `<div>$${(cell.totalSpend/1000).toFixed(0)}k Spend</div>`;
+                        html += `<div class="text-[10px] font-bold opacity-95">$${(cell.totalSavings/1000).toFixed(0)}k Saving</div>`;
+                        html += `</td>`;
+                    }
+                });
+                html += `</tr>`;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function updateChart(canvasId, type, chartData, options) {
+            if (charts[canvasId]) charts[canvasId].destroy();
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            charts[canvasId] = new Chart(ctx, { type: type, data: chartData, options: options });
+        }
+
+        function renderTable(data, tableId = 'data-table', headId = 'table-head', bodyId = 'data-body') {
+            if (!data || data.length === 0) {
+                document.getElementById(headId).innerHTML = '';
+                document.getElementById(bodyId).innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">No matching records found.</td></tr>';
+                return;
+            }
+            const keys = Object.keys(data[0]);
+            document.getElementById(headId).innerHTML = keys.map(k => `<th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase tracking-wider">${k}</th>`).join('');
+            document.getElementById(bodyId).innerHTML = data.map(row => {
+                return `<tr class="hover:bg-gray-50 transition">` + keys.map(k => `<td class="px-3 py-2 whitespace-nowrap text-gray-600">${row[k] !== null && row[k] !== undefined ? row[k] : ''}</td>`).join('') + `</tr>`;
+            }).join('');
+        }
+
+        function filterTable() {
+            const query = document.getElementById('table-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#data-table tbody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        }
+
+        function generateLocalInsights(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('insights-text').innerText = "No records match current filter criteria.";
+                return;
+            }
+            let stage2Count = 0;
+            let totalSav = 0;
+            let topMaterial = "";
+            let maxMatSpend = 0;
+
+            data.forEach(d => {
+                const gate = String(d['Stage Gate'] || '');
+                if (gate.includes('2')) stage2Count++;
+                const spend = Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                if (spend > maxMatSpend) {
+                    maxMatSpend = spend;
+                    topMaterial = d['Material Name'] || 'Unknown';
+                }
+                totalSav += calcRowSavings(d);
+            });
+
+            document.getElementById('insights-text').innerHTML = `
+                <b>Active View Summary:</b> Found <b>${data.length}</b> procurement line items totaling <b>$${totalSav.toLocaleString(undefined, {maximumFractionDigits: 0})}</b> in projected savings. 
+                ⚠️ <b>Risk Alert:</b> ${stage2Count} items are currently in early <i>Stage Gate 2 (Development)</i> requiring priority validation. 
+                📌 Top spend driver in this view is <b>${topMaterial}</b> ($${maxMatSpend.toLocaleString(undefined, {maximumFractionDigits: 0})}).
+            `;
+        }
+
+        // Custom Table Renderer with Targeted Columns for Pop-ups
+        function renderCustomTable(headId, bodyId, headers, rows) {
+            document.getElementById(headId).innerHTML = headers.map(h => `<th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase tracking-wider">${h}</th>`).join('');
+            document.getElementById(bodyId).innerHTML = rows.map(r => `<tr class="hover:bg-gray-50 transition">${r.map(cell => `<td class="px-3 py-2 whitespace-nowrap text-gray-600">${cell}</td>`).join('')}</tr>`).join('');
+        }
+
+        // Context-Aware Pop-Up Modals Implementation
+        // Context-Aware Pop-Up Modals Implementation
+        // Context-Aware Pop-Up Modals Implementation
+        function openModal(key) {
+            const modal = document.getElementById('drilldown-modal');
+            const titleEl = document.getElementById('modal-title');
+            const tableTitleEl = document.getElementById('modal-table-title');
+            const chartWrapper = document.getElementById('modalChartWrapper');
+            const ctx = document.getElementById('modalChartCanvas').getContext('2d');
+
+            if (charts['modalChartCanvas']) {
+                charts['modalChartCanvas'].destroy();
+                charts['modalChartCanvas'] = null;
+            }
+
+            let filteredSubset = [...currentFilteredData];
+            let chartConfig = {};
+            let isKpiModal = false;
+
+        if (key === 'kpi_spend') {
+            isKpiModal = true;
+            titleEl.innerText = "YTD Spend Detailed Master Registry";
+            tableTitleEl.innerText = "All Active Items (Ranked Descending by YTD Spend)";
+            filteredSubset.sort((a,b) => Number(b['Ytd Sep26 12mths PO Spends (USD)']||0) - Number(a['Ytd Sep26 12mths PO Spends (USD)']||0));
+
+            const headers = ["Material Name", "Plant Region", "Sub Category", "Category Manager", "YTD Spend (USD)"];
+            const rows = filteredSubset.map(d => [
+                d['Material Name'] || 'N/A',
+                d['Plant Region'] || 'N/A',
+                d['Sub Category'] || 'N/A',
+                d['Catergory Manager'] || 'N/A',
+                '$' + Number(d['Ytd Sep26 12mths PO Spends (USD)']||0).toLocaleString(undefined, {minimumFractionDigits: 2})
+            ]);
+            renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+        } else if (key === 'kpi_qty') {
+            isKpiModal = true;
+            titleEl.innerText = "PO Volume Detailed Master Registry";
+            tableTitleEl.innerText = "All Active Items (Ranked Descending by PO Quantity)";
+            filteredSubset.sort((a,b) => Number(b['Ytd Sep26 12mths PO Qty (Kgs)']||0) - Number(a['Ytd Sep26 12mths PO Qty (Kgs)']||0));
+
+            const headers = ["Material Name", "Plant Region", "Sub Category", "Category Manager", "PO Quantity (Kgs)"];
+            const rows = filteredSubset.map(d => [
+                d['Material Name'] || 'N/A',
+                d['Plant Region'] || 'N/A',
+                d['Sub Category'] || 'N/A',
+                d['Catergory Manager'] || 'N/A',
+                Number(d['Ytd Sep26 12mths PO Qty (Kgs)']||0).toLocaleString() + ' Kgs'
+            ]);
+            renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+        } else if (key === 'kpi_savings') {
+            isKpiModal = true;
+            titleEl.innerText = "Projected Savings Pipeline Master Registry";
+            tableTitleEl.innerText = "All Active Initiatives (Ranked Descending by Savings)";
+            filteredSubset.sort((a,b) => calcRowSavings(b) - calcRowSavings(a));
+
+            const headers = ["Material Name", "Sub Category", "Initiative Type", "Stage Gate", "Projected Savings (USD)"];
+            const rows = filteredSubset.map(d => [
+                d['Material Name'] || 'N/A',
+                d['Sub Category'] || 'N/A',
+                d['Initiative Type'] || 'N/A',
+                d['Stage Gate'] || 'N/A',
+                '$' + calcRowSavings(d).toLocaleString(undefined, {minimumFractionDigits: 2})
+            ]);
+            renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+        } else if (key === 'kpi_items') {
+            isKpiModal = true;
+            titleEl.innerText = "Active Procurement Line Items Registry";
+            tableTitleEl.innerText = "Complete Master Record View";
+            renderTable(filteredSubset, 'modal-data-table', 'modal-table-head', 'modal-table-body');
+
+        } else if (key === 'sec-map') {
+            isKpiModal = true;
+            titleEl.innerText = "Global Regional Spend & Savings Breakdown";
+            tableTitleEl.innerText = "Regional Distribution Master Registry (All Plant Regions)";
+
+            const regAgg = {};
+            filteredSubset.forEach(d => {
+                const reg = d['Plant Region'] || 'Rest of World';
+                if (!regAgg[reg]) regAgg[reg] = { spend: 0, savings: 0, items: 0 };
+                regAgg[reg].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                regAgg[reg].savings += calcRowSavings(d);
+                regAgg[reg].items += 1;
+            });
+
+            const headers = ["Plant Region", "Active Records", "Total Spend (USD)", "Total Savings (USD)", "ROI Ratio"];
+            const sortedRegions = Object.keys(regAgg).sort((a,b) => regAgg[b].spend - regAgg[a].spend);
+
+            const rows = sortedRegions.map(reg => {
+                const spend = regAgg[reg].spend;
+                const sav = regAgg[reg].savings;
+                const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
+                return [
+                    reg,
+                    regAgg[reg].items + ' items',
+                    '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}),
+                    '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}),
+                    ratio
+                ];
+            });
+            renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+        } else {
+            // Chart modals keep their visual chart view as expected
+            chartWrapper.style.display = 'flex';
+
+            if (key === 'chartSubCat') {
+                titleEl.innerText = "Sub Category Spend & Savings Analysis";
+                tableTitleEl.innerText = "Sub Category Summary Breakdown";
+                const subCatAgg = {};
+                filteredSubset.forEach(d => {
+                    const sub = d['Sub Category'] || 'Unassigned';
+                    if (!subCatAgg[sub]) subCatAgg[sub] = { spend: 0, savings: 0 };
+                    subCatAgg[sub].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                    subCatAgg[sub].savings += calcRowSavings(d);
+                });
+                chartConfig = {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(subCatAgg),
+                        datasets: [
+                            { label: 'Spend ($)', data: Object.values(subCatAgg).map(v => v.spend), backgroundColor: '#4f46e5', borderRadius: 4 },
+                            { label: 'Savings ($)', data: Object.values(subCatAgg).map(v => v.savings), backgroundColor: '#10b981', borderRadius: 4 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+                };
+                const headers = ["Sub Category", "Total Spend (USD)", "Total Savings (USD)", "ROI Efficiency"];
+                const rows = Object.keys(subCatAgg).map(sub => {
+                    const spend = subCatAgg[sub].spend;
+                    const sav = subCatAgg[sub].savings;
+                    const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
+                    return [sub, '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}), ratio];
+                });
+                renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+            } else if (key === 'chartRegion') {
+                titleEl.innerText = "Regional Spend Distribution Overview";
+                tableTitleEl.innerText = "Overview: Regional Summary Table (All 7 Plant Regions)";
+                const allRegions = ["North America", "EMEA", "South East Asia", "Latin America", "Greater China", "India", "Rest of World"];
+                const regAgg = {};
+                allRegions.forEach(r => regAgg[r] = { spend: 0, savings: 0, items: 0 });
+                filteredSubset.forEach(d => {
+                    const reg = d['Plant Region'] || 'Rest of World';
+                    if (!regAgg[reg]) regAgg[reg] = { spend: 0, savings: 0, items: 0 };
+                    regAgg[reg].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+                    regAgg[reg].savings += calcRowSavings(d);
+                    regAgg[reg].items += 1;
+                });
+                chartConfig = {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(regAgg),
+                        datasets: [{ data: Object.values(regAgg).map(v => v.spend), backgroundColor: ['#4f46e5', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                };
+                const headers = ["Plant Region", "Total Spend (USD)", "Total Savings (USD)", "Active Records"];
+                const rows = Object.keys(regAgg).map(reg => [
+                    reg,
+                    '$' + regAgg[reg].spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + regAgg[reg].savings.toLocaleString(undefined, {minimumFractionDigits: 2}),
+                    regAgg[reg].items + ' items'
+                ]);
+                renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+            // } else if (key === 'chartTopMaterials') {
+            //     titleEl.innerText = "Material Spend & Savings Analysis";
+            //     tableTitleEl.innerText = "Summary Table: All Matching Materials (Ranked by Spend)";
+            //     const matAgg = {};
+            //     filteredSubset.forEach(d => {
+            //         const mat = d['Material Name'] || 'Unassigned';
+            //         if (!matAgg[mat]) matAgg[mat] = { spend: 0, savings: 0, subCat: d['Sub Category']||'N/A' };
+            //         matAgg[mat].spend += Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+            //         matAgg[mat].savings += calcRowSavings(d);
+            //     });
+            //     const sortedMatKeys = Object.keys(matAgg).sort((a,b) => matAgg[b].spend - matAgg[a].spend);
+            //     const top5Keys = sortedMatKeys.slice(0, 5);
+            //     chartConfig = {
+            //         type: 'bar',
+            //         data: {
+            //             labels: top5Keys.map(k => k.substring(0, 20)),
+            //             datasets: [
+            //                 { label: 'Spend ($)', data: top5Keys.map(k => matAgg[k].spend), backgroundColor: '#6366f1', borderRadius: 4 },
+            //                 { label: 'Savings ($)', data: top5Keys.map(k => matAgg[k].savings), backgroundColor: '#10b981', borderRadius: 4 }
+            //             ]
+            //         },
+            //         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            //     };
+            //     const headers = ["Material Name", "Sub Category", "Total Spend (USD)", "Total Savings (USD)", "ROI Ratio"];
+            //     const rows = sortedMatKeys.map(mat => {
+            //         const spend = matAgg[mat].spend;
+            //         const sav = matAgg[mat].savings;
+            //         const ratio = spend > 0 ? ((sav / spend) * 100).toFixed(1) + '%' : '0.0%';
+            //         return [mat, matAgg[mat].subCat, '$' + spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + sav.toLocaleString(undefined, {minimumFractionDigits: 2}), ratio];
+            //     });
+            //     renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+            // } else if (key === 'chartBubbleMatrix') {
+            //     titleEl.innerText = "Initiative Efficiency & Bubble Matrix Analysis";
+            //     tableTitleEl.innerText = "Sub Category vs Initiative Efficiency Rankings";
+            //     if (charts['chartBubbleMatrix']) {
+            //         const source = charts['chartBubbleMatrix'];
+            //         chartConfig = {
+            //             type: source.config.type,
+            //             data: JSON.parse(JSON.stringify(source.config.data)),
+            //             options: { ...source.config.options, maintainAspectRatio: false }
+            //         };
+            //     }
+            //     const headers = ["Initiative Type", "Sub Category", "Total Spend (USD)", "Total Savings (USD)", "Avg Row ROI"];
+            //     const initSubAgg = {};
+            //     filteredSubset.forEach(d => {
+            //         const init = d['Initiative Type'] || 'Unassigned';
+            //         const sub = d['Sub Category'] || 'Unassigned';
+            //         const key = `${init}___${sub}`;
+            //         if (!initSubAgg[key]) initSubAgg[key] = { init: init, sub: sub, spend: 0, savings: 0, ratioSum: 0, count: 0 };
+            //         const spend = Number(d['Ytd Sep26 12mths PO Spends (USD)'] || 0);
+            //         const sav = calcRowSavings(d);
+            //         const rowRatio = spend > 0 ? (sav / spend) : 0;
+            //         initSubAgg[key].spend += spend;
+            //         initSubAgg[key].savings += sav;
+            //         initSubAgg[key].ratioSum += rowRatio;
+            //         initSubAgg[key].count += 1;
+            //     });
+            //     const sortedKeys = Object.keys(initSubAgg).sort((a,b) => (initSubAgg[b].ratioSum/initSubAgg[b].count) - (initSubAgg[a].ratioSum/initSubAgg[a].count));
+            //     const rows = sortedKeys.map(k => {
+            //         const item = initSubAgg[k];
+            //         const avgRatio = item.count > 0 ? ((item.ratioSum / item.count) * 100).toFixed(1) + '%' : '0.0%';
+            //         return [item.init, item.sub, '$' + item.spend.toLocaleString(undefined, {minimumFractionDigits: 2}), '$' + item.savings.toLocaleString(undefined, {minimumFractionDigits: 2}), avgRatio];
+            //     });
+            //     renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+
+            } else if (key === 'chartMonthlySpend') {
+                titleEl.innerText = "Monthly Projected Savings Breakdown";
+                tableTitleEl.innerText = "Monthly Savings Summary Table";
+                
+                const standardMonths = [
+                    { keyPart: 'oct 26', label: "Oct '26" },
+                    { keyPart: 'nov 26', label: "Nov '26" },
+                    { keyPart: 'dec 26', label: "Dec '26" },
+                    { keyPart: 'jan 27', label: "Jan '27" },
+                    { keyPart: 'feb 27', label: "Feb '27" },
+                    { keyPart: 'mar 27', label: "Mar '27" },
+                    { keyPart: 'apr 27', label: "Apr '27" },
+                    { keyPart: 'may 27', label: "May '27" },
+                    { keyPart: 'jun 27', label: "Jun '27" },
+                    { keyPart: 'jul 27', label: "Jul '27" },
+                    { keyPart: 'aug 27', label: "Aug '27" },
+                    { keyPart: 'sep 27', label: "Sep '27" }
+                ];
+
+                const monthlySavingsMap = {};
+                standardMonths.forEach(m => monthlySavingsMap[m.label] = 0);
+
+                if (filteredSubset.length > 0) {
+                    const sampleRow = filteredSubset[0];
+                    Object.keys(sampleRow).forEach(k => {
+                        const lowerK = k.toLowerCase();
+                        if (lowerK.includes('saving') && !lowerK.includes('actual')) {
+                            standardMonths.forEach(m => {
+                                if (lowerK.includes(m.keyPart)) {
+                                    filteredSubset.forEach(d => {
+                                        monthlySavingsMap[m.label] += Number(d[k] || 0);
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+
+                chartConfig = {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(monthlySavingsMap),
+                        datasets: [{
+                            label: 'Savings ($)',
+                            data: Object.values(monthlySavingsMap),
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+                };
+
+                const headers = ["Month Period", "Projected Savings (USD)"];
+                const rows = Object.keys(monthlySavingsMap).map(m => [
+                    m,
+                    '$' + monthlySavingsMap[m].toLocaleString(undefined, {minimumFractionDigits: 2})
+                ]);
+                renderCustomTable('modal-table-head', 'modal-table-body', headers, rows);
+            }
+
+            charts['modalChartCanvas'] = new Chart(ctx, chartConfig);
+        }
+
+        // Toggle chart wrapper visibility cleanly
+        if (isKpiModal) {
+            chartWrapper.style.display = 'none';
+        } else {
+            chartWrapper.style.display = 'flex';
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+        function closeModal() {
+            document.getElementById('drilldown-modal').classList.add('hidden');
+            if (charts['modalChartCanvas']) {
+                charts['modalChartCanvas'].destroy();
+                charts['modalChartCanvas'] = null;
+            }
+        }
+
+        function handleModalBackdropClick(event) {
+            if (event.target.id === 'drilldown-modal') closeModal();
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        function exportDataCSV() {
+            if (!currentFilteredData || currentFilteredData.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+            const fileName = `Archroma_Global_Procurement_Summary.csv`;
+            const keys = Object.keys(currentFilteredData[0]);
+            let csvContent = "data:text/csv;charset=utf-8," + [
+                keys.join(","),
+                ...currentFilteredData.map(row => keys.map(k => `"${(row[k] !== null && row[k] !== undefined ? row[k] : '').toString().replace(/"/g, '""')}"`).join(","))
+            ].join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (json && json.length > 0) {
+                        rawData = json;
+                        initDashboard();
+                        alert(`Successfully loaded ${json.length} records from ${file.name}!`);
+                    } else {
+                        alert("The uploaded Excel sheet appears to be empty.");
+                    }
+                } catch (err) {
+                    console.error("Excel Parsing Error Details:", err);
+                    alert("Error parsing Excel file. Please ensure it's a valid, uncorrupted .xlsx or .xls file.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>
