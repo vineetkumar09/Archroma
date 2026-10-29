@@ -34,47 +34,53 @@ REGION_COORDS = {
 }
 
 st.markdown("""<style>
-:root{--indigo:#1e1b4b;--purple:#4f46e5;--muted:#64748b}
+:root{--navy:#1e1b4b;--ink:#172033;--muted:#64748b;--purple:#4f46e5}
 html,body,[data-testid="stApp"]{font-family:Inter,ui-sans-serif,system-ui,sans-serif}
-[data-testid="stAppViewContainer"]{background:#f8fafc;color:#1f2937}
-[data-testid="stHeader"]{background:transparent}
-[data-testid="stSidebar"]{background:#1e1b4b;border-right:1px solid #312e81}
-[data-testid="stSidebar"]>div:first-child{padding-top:1rem}
-[data-testid="stSidebar"] *{color:#e0e7ff}
-[data-testid="stSidebar"] h3,[data-testid="stSidebar"] h4{color:#fff!important}
-[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p{font-size:.76rem!important;font-weight:600!important;color:#c7d2fe!important}
-[data-testid="stSidebar"] [data-baseweb="select"]{background:#312e81;border:1px solid #4338ca;border-radius:7px}
-[data-testid="stSidebar"] [data-baseweb="select"] *{color:#fff!important}
-[data-testid="stSidebar"] [data-baseweb="tag"]{background:#4f46e5}
-[data-testid="stSidebar"] [data-baseweb="select"] input{color:#fff!important}
+[data-testid="stAppViewContainer"]{background:#f9fafb;color:#1f2937}
+[data-testid="stHeader"]{background:#f9fafb00;height:2.5rem}
+[data-testid="stSidebar"]{background:#1e1b4b!important;border-right:1px solid #312e81;min-width:264px}
+[data-testid="stSidebar"]>div:first-child{padding-top:.6rem}
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p{font-size:11px!important;font-weight:600!important;color:#c7d2fe!important}
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"]{margin-bottom:3px}
+[data-testid="stSidebar"] [data-baseweb="select"]>div{background:#312e81!important;border:1px solid #433878!important;border-radius:8px!important;min-height:34px!important}
+[data-testid="stSidebar"] [data-baseweb="select"] *{color:#fff!important;font-size:12px}
+[data-testid="stSidebar"] [data-baseweb="tag"]{background:#4f46e5!important}
 [data-testid="stSidebar"] [data-testid="stFileUploader"]{border:1px dashed #6366f1;border-radius:9px}
-[data-testid="stSidebar"] button{border-radius:8px;background:#4338ca;color:#fff;border:1px solid #6366f1}
-[data-testid="stSidebar"] button:hover{background:#4f46e5;color:#fff}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] *{color:#c7d2fe!important}
+[data-testid="stSidebar"] .stButton>button{border-radius:7px;background:#3730a3;color:#fff;border:1px solid #5148a8;min-height:32px;font-size:12px}
+[data-testid="stSidebar"] .stButton>button:hover{background:#4f46e5;color:#fff}
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{color:#a5b4fc!important;font-size:10px!important}
 [data-testid="stSidebar"] hr{border-color:#373078}
-[data-testid="stSidebar"] .stCaption{color:#c7d2fe!important}
-.block-container{padding-top:1.4rem;max-width:1600px;padding-left:2rem;padding-right:2rem}
-h1{color:#111827;font-size:1.45rem!important;font-weight:750!important;letter-spacing:-.025em}
+.block-container{padding-top:.5rem;max-width:1660px;padding-left:1.7rem;padding-right:1.7rem;padding-bottom:4rem}
+h1{color:#111827;font-size:1.24rem!important;font-weight:760!important;letter-spacing:-.025em}
 h2,h3{color:#1f2937;letter-spacing:-.02em}
-h3{font-size:1.03rem!important;font-weight:750!important}
-[data-testid="stMetric"]{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:21px 20px;box-shadow:0 1px 3px #0f172a08;min-height:132px}
-[data-testid="stMetricLabel"] p{color:#64748b;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-[data-testid="stMetricValue"]{color:#312e81;font-size:clamp(1.5rem,2.15vw,2.15rem);font-weight:800}
+h3{font-size:1rem!important;font-weight:750!important}
+[data-testid="stMetric"]{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:21px 19px;box-shadow:0 2px 5px #0f172a08;min-height:136px}
+[data-testid="stMetricLabel"] p{color:#64748b;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+[data-testid="stMetricValue"]{color:#312e81;font-size:clamp(1.3rem,2vw,2rem);font-weight:800}
 [data-testid="stVerticalBlockBorderWrapper"]>div{border-color:#e5e7eb!important;border-radius:12px!important;background:#fff;box-shadow:0 1px 4px #0f172a08}
 [data-testid="stPlotlyChart"]{border-radius:9px;overflow:hidden}
 [data-testid="stDataFrame"]{border:1px solid #e5e7eb;border-radius:9px;overflow:hidden}
 [data-testid="stExpander"]{background:#fff;border:1px solid #e5e7eb;border-radius:10px}
-.stButton>button[kind="primary"],.stDownloadButton>button{background:#4f46e5;color:white;border:0;border-radius:8px}
-.stButton>button:hover,.stDownloadButton>button:hover{border-color:#6366f1;color:#4338ca}
-.small-note{font-size:.82rem;color:#64748b;margin-top:-.4rem;margin-bottom:1.1rem}
-.nav-label{font-size:10px;font-weight:800;letter-spacing:.12em;color:#a5b4fc;margin:16px 0 8px}
-.nav-item{display:block;padding:10px 12px;margin:4px 0;background:#312e81;border:1px solid #373078;border-radius:7px;color:#e0e7ff!important;text-decoration:none!important;font-size:12px;font-weight:650}
+.stDownloadButton>button{background:#047857;color:white;border:0;border-radius:8px}
+.stDownloadButton>button:hover{background:#059669;color:white}
+.small-note{font-size:12px;color:#64748b;margin-top:-.4rem;margin-bottom:1.2rem}
+.nav-label{font-size:10px;font-weight:800;letter-spacing:.11em;color:#a5b4fc!important;margin:16px 0 8px}
+.nav-item{display:block;padding:9px 11px;margin:5px 0;background:#312e81a8;border:1px solid #373078;border-radius:7px;color:#e0e7ff!important;text-decoration:none!important;font-size:12px;font-weight:650}
 .nav-item:hover{background:#4338ca;color:#fff!important}
-.brand{display:flex;gap:10px;align-items:center;padding:7px 0 14px;border-bottom:1px solid #373078;margin-bottom:14px}
+.brand{display:flex;gap:10px;align-items:center;padding:14px 0 20px;border-bottom:1px solid #373078;margin-bottom:17px}
 .brand-icon{font-size:25px;color:#a5b4fc}
 .brand-name{font-size:14px;font-weight:800;color:white}
 .brand-sub{font-size:10px;color:#a5b4fc;letter-spacing:.02em}
-.section-label{font-size:1.04rem;font-weight:800;color:#1f2937;margin:26px 0 13px}
-@media(max-width:900px){.block-container{padding-left:1rem;padding-right:1rem}}
+.page-head{display:flex;justify-content:space-between;align-items:center;background:white;padding:19px 21px;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 3px #0f172a08;margin-bottom:17px}
+.page-head h2{font-size:19px;font-weight:800;margin:0;color:#111827}
+.page-head p{font-size:12px;color:#64748b;margin:5px 0 0}
+.head-badge{font-size:10px;background:#eef2ff;color:#4338ca;padding:7px 11px;border-radius:7px;font-weight:750}
+.section-heading{font-size:14px;font-weight:800;color:#273149;margin:21px 0 12px}
+.insight{background:linear-gradient(90deg,#fffbeb,#fff7ed);border:1px solid #fcd9a4;border-radius:11px;padding:14px 18px;margin:12px 0 18px;font-size:12px;color:#92400e}
+.insight b{font-size:11px;letter-spacing:.05em}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"]{gap:.43rem}
+@media(max-width:900px){.block-container{padding-left:1rem;padding-right:1rem}.page-head{padding:14px}.head-badge{display:none}}
 </style>""", unsafe_allow_html=True)
 
 # The sample records are embedded directly so this application is truly single-file.
@@ -138,7 +144,11 @@ with st.sidebar:
     st.markdown('<div class="brand"><span class="brand-icon">▥</span><div><div class="brand-name">Archroma Analytics</div><div class="brand-sub">Supply Chain Control Center</div></div></div>', unsafe_allow_html=True)
     st.markdown('<div class="nav-label">GLOBAL FILTERS</div>', unsafe_allow_html=True)
     st.button('↺ Reset Filters', on_click=reset_filters, use_container_width=True)
-    upload = st.file_uploader('Upload Excel / CSV', type=['xlsx','xls','csv'], help='Uploaded files are processed in the Streamlit server memory.')
+
+# Uploader is placed after the nine filters, as in the original Vercel sidebar.
+# The upload widget must be instantiated before the dataset is loaded.
+with st.sidebar:
+    upload = st.file_uploader('Upload New Excel / CSV', type=['xlsx','xls','csv'], help='Uploaded files are processed in Streamlit server memory.')
 
 try:
     payload = upload.getvalue() if upload else None
@@ -181,8 +191,7 @@ with st.sidebar:
     st.divider()
     st.caption('🔒 Uploaded data stays in this Streamlit server process. Use localhost for fully local operation.')
 
-st.title('Procurement & Supply Chain Performance')
-st.markdown('<div class="small-note">Live analytical insights, savings tracking, and ROI efficiency monitoring.</div>', unsafe_allow_html=True)
+st.markdown('''<div class="page-head"><div><h2>Procurement &amp; Supply Chain Performance</h2><p>Live analytical insights, savings tracking, and ROI risk monitoring.</p></div><span class="head-badge">SUPPLY CHAIN CONTROL CENTER</span></div>''', unsafe_allow_html=True)
 if not len(filtered):
     st.warning('No records match the selected filters. Use Reset Filters to start over.')
     st.stop()
@@ -193,7 +202,7 @@ savings = float(filtered['_savings_usd'].sum())
 realized = float(filtered.loc[filtered['_status']=='Realized','_savings_usd'].sum())
 pipeline = savings - realized
 
-st.markdown('### Executive KPI Summary')
+st.markdown('<div id="executive-kpi-summary" class="section-heading">EXECUTIVE KPI SUMMARY</div>',unsafe_allow_html=True)
 cols = st.columns(4)
 with cols[0]: st.metric('Total YTD Spend', money(spend))
 with cols[1]: st.metric('Total PO Quantity', f'{qty:,.0f} Kgs')
@@ -218,11 +227,9 @@ with st.expander('🔎 KPI drill-downs and detailed records', expanded=False):
 regional = filtered.groupby('Plant Region',observed=True)[SPEND].sum().sort_values(ascending=False)
 if spend > 0 and len(regional):
     biggest = regional.index[0]
-    st.info(f'**Efficiency scanner:** {biggest} represents {regional.iloc[0]/spend:.1%} of filtered spend. '
-            f'Projected savings / spend: {savings/spend:.1%}. '
-            f'{(filtered["_status"]=="Pipeline").sum():,} line items are still in pipeline.')
+    st.markdown(f'<div class="insight"><b>◈ AUTOMATED RISK &amp; EFFICIENCY SCANNER</b><br><br>{html.escape(str(biggest))} represents {regional.iloc[0]/spend:.1%} of filtered spend. Projected savings / spend: {savings/spend:.1%}. {(filtered["_status"]=="Pipeline").sum():,} line items remain in pipeline.</div>',unsafe_allow_html=True)
 
-st.markdown('### Analytics Overview')
+st.markdown('<div id="analytics-overview" class="section-heading">ANALYTICS CHARTS</div>',unsafe_allow_html=True)
 left, right = st.columns(2, gap='medium')
 with left:
     with st.container(border=True):
@@ -273,7 +280,7 @@ with right:
         fig.update_yaxes(title_text='Volume (Kgs)',secondary_y=True,showgrid=False)
         plot_or_empty(fig,'monthly_trend')
 
-st.markdown('### Savings Efficiency & ROI Heatmap')
+st.markdown('<div id="savings-efficiency-roi-heatmap" class="section-heading">🔥 Savings Efficiency & ROI Heatmap</div>',unsafe_allow_html=True)
 st.caption('Rows: Initiative Types ranked by total savings (USD). Columns: Sub Categories. Purple = spend (MUSD); green = savings percentage and amount (MUSD).')
 heat = filtered.groupby(['Initiative Type','Sub Category'],observed=True).agg(spend=(SPEND,'sum'),savings=('_savings_usd','sum'),items=(SPEND,'size')).reset_index()
 row_order = heat.groupby('Initiative Type')['savings'].sum().sort_values(ascending=False).index.tolist()
@@ -315,7 +322,7 @@ st.markdown(''.join(parts),unsafe_allow_html=True)
 with st.expander('Heatmap detailed breakdown'):
     st.dataframe(heat.sort_values(['savings'],ascending=False),hide_index=True,use_container_width=True)
 
-st.markdown('### Filtered Master Data Registry')
+st.markdown('<div id="filtered-master-data-registry" class="section-heading">Filtered Master Data Registry</div>',unsafe_allow_html=True)
 search = st.text_input('Search all columns',placeholder='Type a material, supplier, plant, manager, code…',key='table_search')
 registry = filtered.drop(columns=['_savings_usd','_status'],errors='ignore')
 if search.strip():
